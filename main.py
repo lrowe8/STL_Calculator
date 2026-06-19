@@ -1,4 +1,4 @@
-from vedo import Mesh, show, Plotter
+from vedo import Mesh, Plotter
 import customtkinter as ctk
 from PIL import Image
 import os
@@ -162,12 +162,12 @@ class App(ctk.CTk):
         )
 
     def _setup_calc_callbacks_(self):
-        self._x_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
-        self._y_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
-        self._z_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
-        self._x_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
-        self._y_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
-        self._z_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
+        self._x_textbox_updated_value_.bind("<FocusOut>", self._x_values_update_)
+        self._y_textbox_updated_value_.bind("<FocusOut>", self._y_values_update_)
+        self._z_textbox_updated_value_.bind("<FocusOut>", self._z_values_update_)
+        self._x_textbox_percentage_value_.bind("<FocusOut>", self._x_values_update_)
+        self._y_textbox_percentage_value_.bind("<FocusOut>", self._y_values_update_)
+        self._z_textbox_percentage_value_.bind("<FocusOut>", self._z_values_update_)
 
     def _set_viz_controls_(self, frame: ctk.CTkFrame):
         self._viz_button_ = ctk.CTkButton(
@@ -233,46 +233,148 @@ class App(ctk.CTk):
         self._linked_operation_ = not self._linked_operation_
 
     def _visualize_(self):
-        self._model_.show(axes=1)
+        print(f"Before Scale{self._model_.zbounds()}")
+        x_percentage = float(get_textbox_value(self._x_textbox_percentage_value_))
+        y_percentage = float(get_textbox_value(self._y_textbox_percentage_value_))
+        z_percentage = float(get_textbox_value(self._z_textbox_percentage_value_))
 
-    def _values_update_(self, event):
-        if not self._linked_operation_:
-            textbox_to_update = None
-            val = float(get_textbox_value(event.widget.master))
+        scale_factors = [x_percentage / 100, y_percentage / 100, z_percentage / 100]
+        self._model_.scale(scale_factors)
+        print(f"After Scale{self._model_.zbounds()}")
+
+        plotter = Plotter(axes=1)
+        plotter.show(self._model_).close()
+
+        scale_factors = [1 / x for x in scale_factors]
+        self._model_.scale(scale_factors)
+
+        print(f"Before Exit {self._model_.zbounds()}")
+
+    def _x_values_update_(self, event):
+        # TODO bounds check for zero
+        updated_val = float(get_textbox_value(event.widget.master))
+        default_value = float(get_textbox_value(self._x_textbox_current_value_))
+
+        if self._linked_operation_:
+            if event.widget.master is self._x_textbox_updated_value_:
+                percentage = updated_val / default_value
+                update_textbox(
+                    self._x_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+                )
+            elif event.widget.master is self._x_textbox_percentage_value_:
+                percentage = float(get_textbox_value(event.widget.master)) / 100
+                update_textbox(
+                    self._x_textbox_updated_value_,
+                    f"{(float(get_textbox_value(self._x_textbox_current_value_)) * percentage):.2f}",
+                )
+
+            update_textbox(
+                self._y_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._z_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._y_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._y_textbox_current_value_)) * percentage):.2f}",
+            )
+            update_textbox(
+                self._z_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._z_textbox_current_value_)) * percentage):.2f}",
+            )
+        else:
             if event.widget.master is self._x_textbox_updated_value_:
                 textbox_to_update = self._x_textbox_percentage_value_
-                val /= float(get_textbox_value(self._x_textbox_current_value_))
-            elif event.widget.master is self._y_textbox_updated_value_:
-                textbox_to_update = self._y_textbox_percentage_value_
-                val /= float(get_textbox_value(self._y_textbox_current_value_))
-            elif event.widget.master is self._z_textbox_updated_value_:
-                textbox_to_update = self._z_textbox_percentage_value_
-                val /= float(get_textbox_value(self._y_textbox_current_value_))
+                updated_val = updated_val / default_value * 100
+            elif event.widget.master is self._x_textbox_percentage_value_:
+                textbox_to_update = self._x_textbox_updated_value_
+                updated_val = (updated_val / 100) * default_value
 
-            if textbox_to_update in (
-                self._x_textbox_percentage_value_,
-                self._y_textbox_percentage_value_,
-                self._z_textbox_percentage_value_,
-            ):
-                val *= 100
+            update_textbox(textbox_to_update, f"{updated_val:.2f}")
 
-            update_textbox(textbox_to_update, f"{val:.2f}")
+    def _y_values_update_(self, event):
+        # TODO bounds check for zero
+        updated_val = float(get_textbox_value(event.widget.master))
+        default_value = float(get_textbox_value(self._y_textbox_current_value_))
 
-        if event.widget.master in (
-            self._x_textbox_updated_value_,
-            self._y_textbox_updated_value_,
-            self._z_textbox_updated_value_,
-        ):
-            print("Updated value")
-        elif event.widget.master in (
-            self._x_textbox_percentage_value_,
-            self._y_textbox_percentage_value_,
-            self._z_textbox_percentage_value_,
-        ):
-            print("Percentage update")
+        if self._linked_operation_:
+            if event.widget.master is self._y_textbox_updated_value_:
+                percentage = updated_val / default_value
+                update_textbox(
+                    self._y_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+                )
+            elif event.widget.master is self._y_textbox_percentage_value_:
+                percentage = float(get_textbox_value(event.widget.master)) / 100
+                update_textbox(
+                    self._y_textbox_updated_value_,
+                    f"{(float(get_textbox_value(self._y_textbox_current_value_)) * percentage):.2f}",
+                )
+
+            update_textbox(
+                self._x_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._z_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._x_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._y_textbox_current_value_)) * percentage):.2f}",
+            )
+            update_textbox(
+                self._z_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._z_textbox_current_value_)) * percentage):.2f}",
+            )
         else:
-            print("Missed")
-        pass
+            if event.widget.master is self._y_textbox_updated_value_:
+                textbox_to_update = self._y_textbox_percentage_value_
+                updated_val = updated_val / default_value * 100
+            elif event.widget.master is self._y_textbox_percentage_value_:
+                textbox_to_update = self._y_textbox_updated_value_
+                updated_val = (updated_val / 100) * default_value
+
+            update_textbox(textbox_to_update, f"{updated_val:.2f}")
+
+    def _z_values_update_(self, event):
+        # TODO bounds check for zero
+        updated_val = float(get_textbox_value(event.widget.master))
+        default_value = float(get_textbox_value(self._z_textbox_current_value_))
+
+        if self._linked_operation_:
+            if event.widget.master is self._z_textbox_updated_value_:
+                percentage = updated_val / default_value
+                update_textbox(
+                    self._z_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+                )
+            elif event.widget.master is self._z_textbox_percentage_value_:
+                percentage = float(get_textbox_value(event.widget.master)) / 100
+                update_textbox(
+                    self._z_textbox_updated_value_,
+                    f"{(float(get_textbox_value(self._x_textbox_current_value_)) * percentage):.2f}",
+                )
+
+            update_textbox(
+                self._y_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._x_textbox_percentage_value_, f"{(percentage * 100):.2f}"
+            )
+            update_textbox(
+                self._y_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._y_textbox_current_value_)) * percentage):.2f}",
+            )
+            update_textbox(
+                self._x_textbox_updated_value_,
+                f"{(float(get_textbox_value(self._x_textbox_current_value_)) * percentage):.2f}",
+            )
+        else:
+            if event.widget.master is self._z_textbox_updated_value_:
+                textbox_to_update = self._z_textbox_percentage_value_
+                updated_val = updated_val / default_value * 100
+            elif event.widget.master is self._z_textbox_percentage_value_:
+                textbox_to_update = self._z_textbox_updated_value_
+                updated_val = (updated_val / 100) * default_value
+
+            update_textbox(textbox_to_update, f"{updated_val:.2f}")
 
 
 if __name__ == "__main__":
