@@ -4,7 +4,12 @@ from PIL import Image
 import os
 import sys
 
-from shared_utils import create_table_value_textbox, create_table_label
+from shared_utils import (
+    create_table_value_textbox,
+    create_table_label,
+    update_textbox,
+    get_textbox_value,
+)
 
 
 class App(ctk.CTk):
@@ -41,7 +46,8 @@ class App(ctk.CTk):
         calc_control_frame.grid_rowconfigure(2, weight=1)
         calc_control_frame.grid_columnconfigure(1, weight=1)
         calc_control_frame.grid(row=1, pady=(20, 5))
-        self._set_calc_controls_(calc_control_frame)
+        self._setup_calc_table_(calc_control_frame)
+        self._setup_calc_callbacks_()
 
         viz_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         viz_frame.grid_rowconfigure(0, weight=1)
@@ -71,7 +77,7 @@ class App(ctk.CTk):
         )
         self.button.grid(row=0, column=2, padx=10, pady=(0, 20))
 
-    def _set_calc_controls_(self, frame: ctk.CTkFrame):
+    def _setup_calc_table_(self, frame: ctk.CTkFrame):
         # Set up header
         self._original_label_ = create_table_label(frame, "Original (in)")
         self._original_label_.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
@@ -82,12 +88,12 @@ class App(ctk.CTk):
             row=0, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
 
-        self.x_label = create_table_label(frame, "X Distance:")
-        self.x_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
+        # Set up X row
+        self._x_label = create_table_label(frame, "X Distance:")
+        self._x_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
 
-        # Create textbox
-        self.x_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self.x_textbox_current_value_.grid(
+        self._x_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self._x_textbox_current_value_.grid(
             row=1, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
 
@@ -102,13 +108,12 @@ class App(ctk.CTk):
             row=1, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
         # TODO add callback for number validation and updates
+        # Setup Y row
+        self._y_label = create_table_label(frame, "Y Distance:")
+        self._y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
 
-        self.y_label = create_table_label(frame, "Y Distance:")
-        self.y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
-
-        # Create textbox
-        self.y_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self.y_textbox_current_value_.grid(
+        self._y_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self._y_textbox_current_value_.grid(
             row=2, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
 
@@ -136,24 +141,33 @@ class App(ctk.CTk):
             row=2, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
 
-        self.z_label = create_table_label(frame, "Z Distance:")
-        self.z_label.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="ns")
+        # Set up Z row
+        self._z_label = create_table_label(frame, "Z Distance:")
+        self._z_label.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
-        self.z_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self.z_textbox_current_value_.grid(
+        self._z_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self._z_textbox_current_value_.grid(
             row=3, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
-        self._x_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
-        self._x_textbox_updated_value_.grid(
+        self._z_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+        self._z_textbox_updated_value_.grid(
             row=3, column=3, padx=10, pady=(0, 20), sticky="ns"
         )
-        self._x_textbox_percentage_value_ = create_table_value_textbox(
+        self._z_textbox_percentage_value_ = create_table_value_textbox(
             frame, ctk.NORMAL
         )
-        self._x_textbox_percentage_value_.grid(
+        self._z_textbox_percentage_value_.grid(
             row=3, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
+
+    def _setup_calc_callbacks_(self):
+        self._x_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
+        self._y_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
+        self._z_textbox_updated_value_.bind("<FocusOut>", self._values_update_)
+        self._x_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
+        self._y_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
+        self._z_textbox_percentage_value_.bind("<FocusOut>", self._values_update_)
 
     def _set_viz_controls_(self, frame: ctk.CTkFrame):
         self._viz_button_ = ctk.CTkButton(
@@ -166,26 +180,32 @@ class App(ctk.CTk):
         y_values = tuple(y / 25.4 for y in self._model_.ybounds())
         z_values = tuple(z / 25.4 for z in self._model_.zbounds())
 
-        self.x_textbox_current_value_.configure(state=ctk.NORMAL)
-        self.x_textbox_current_value_.delete("0.0", "end")
-        self.x_textbox_current_value_.insert(
-            "0.0", f"{(x_values[1] - x_values[0]):.2f}"
+        # Update original textboxes
+        update_textbox(
+            self._x_textbox_current_value_, f"{(x_values[1] - x_values[0]):.2f}"
         )
-        self.x_textbox_current_value_.configure(state=ctk.DISABLED)
+        update_textbox(
+            self._y_textbox_current_value_, f"{(y_values[1] - y_values[0]):.2f}"
+        )
+        update_textbox(
+            self._z_textbox_current_value_, f"{(z_values[1] - z_values[0]):.2f}"
+        )
 
-        self.y_textbox_current_value_.configure(state=ctk.NORMAL)
-        self.y_textbox_current_value_.delete("0.0", "end")
-        self.y_textbox_current_value_.insert(
-            "0.0", f"{(y_values[1] - y_values[0]):.2f}"
+        # Update updated textboxes
+        update_textbox(
+            self._x_textbox_updated_value_, f"{(x_values[1] - x_values[0]):.2f}"
         )
-        self.y_textbox_current_value_.configure(state=ctk.DISABLED)
+        update_textbox(
+            self._y_textbox_updated_value_, f"{(y_values[1] - y_values[0]):.2f}"
+        )
+        update_textbox(
+            self._z_textbox_updated_value_, f"{(z_values[1] - z_values[0]):.2f}"
+        )
 
-        self.z_textbox_current_value_.configure(state=ctk.NORMAL)
-        self.z_textbox_current_value_.delete("0.0", "end")
-        self.z_textbox_current_value_.insert(
-            "0.0", f"{(z_values[1] - z_values[0]):.2f}"
-        )
-        self.z_textbox_current_value_.configure(state=ctk.DISABLED)
+        # Update percentage textboxes
+        update_textbox(self._x_textbox_percentage_value_, f"{(100):.2f}")
+        update_textbox(self._y_textbox_percentage_value_, f"{(100):.2f}")
+        update_textbox(self._z_textbox_percentage_value_, f"{(100):.2f}")
 
     def _open_file_prompt_(self):
         file_path = ctk.filedialog.askopenfilename(
@@ -196,10 +216,7 @@ class App(ctk.CTk):
             self._model_ = Mesh(file_path)
 
             # Update the file path
-            self.my_textbox.configure(state=ctk.NORMAL)
-            self.my_textbox.delete("0.0", "end")
-            self.my_textbox.insert("0.0", file_path)
-            self.my_textbox.configure(state=ctk.DISABLED)
+            update_textbox(self.my_textbox, file_path)
 
             # Update the size values
             self._update_size_values_()
@@ -217,6 +234,45 @@ class App(ctk.CTk):
 
     def _visualize_(self):
         self._model_.show(axes=1)
+
+    def _values_update_(self, event):
+        if not self._linked_operation_:
+            textbox_to_update = None
+            val = float(get_textbox_value(event.widget.master))
+            if event.widget.master is self._x_textbox_updated_value_:
+                textbox_to_update = self._x_textbox_percentage_value_
+                val /= float(get_textbox_value(self._x_textbox_current_value_))
+            elif event.widget.master is self._y_textbox_updated_value_:
+                textbox_to_update = self._y_textbox_percentage_value_
+                val /= float(get_textbox_value(self._y_textbox_current_value_))
+            elif event.widget.master is self._z_textbox_updated_value_:
+                textbox_to_update = self._z_textbox_percentage_value_
+                val /= float(get_textbox_value(self._y_textbox_current_value_))
+
+            if textbox_to_update in (
+                self._x_textbox_percentage_value_,
+                self._y_textbox_percentage_value_,
+                self._z_textbox_percentage_value_,
+            ):
+                val *= 100
+
+            update_textbox(textbox_to_update, f"{val:.2f}")
+
+        if event.widget.master in (
+            self._x_textbox_updated_value_,
+            self._y_textbox_updated_value_,
+            self._z_textbox_updated_value_,
+        ):
+            print("Updated value")
+        elif event.widget.master in (
+            self._x_textbox_percentage_value_,
+            self._y_textbox_percentage_value_,
+            self._z_textbox_percentage_value_,
+        ):
+            print("Percentage update")
+        else:
+            print("Missed")
+        pass
 
 
 if __name__ == "__main__":
