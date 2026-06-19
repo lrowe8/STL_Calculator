@@ -2,6 +2,8 @@ from vedo import Mesh, show
 import customtkinter as ctk
 from PIL import Image
 
+from shared_utils import create_table_value_textbox, create_table_label
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -9,11 +11,9 @@ class App(ctk.CTk):
 
         # Class variable initialization
         self._model_ = None
-        self._linked_icon_ = ctk.CTkImage(
-            light_image=Image.open("broken.jpg"),
-            dark_image=Image.open("link.jpg"),
-            size=(20, 20),
-        )
+        self._linked_operation_ = True
+        self._linked_icon_ = ctk.CTkImage(Image.open("link.jpg"), size=(20, 20))
+        self._unlinked_icon_ = ctk.CTkImage(Image.open("broken.jpg"), size=(20, 20))
 
         # Configure application window dimensions
         self.title("CNC Router STL Application")
@@ -57,34 +57,46 @@ class App(ctk.CTk):
         self.button.grid(row=0, column=2, padx=10, pady=(0, 20))
 
     def _set_calc_controls_(self, frame: ctk.CTkFrame):
-        self.x_label = ctk.CTkLabel(
-            master=frame,
-            height=20,
-            text="X Distance:",
-            font=("Arial", 14, "bold"),
+        # Set up header
+        self._original_label_ = create_table_label(frame, "Original (in)")
+        self._original_label_.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
+        self._updated_label_ = create_table_label(frame, "Updated (in)")
+        self._updated_label_.grid(row=0, column=3, padx=10, pady=(0, 20), sticky="ns")
+        self._percentage_label_ = create_table_label(frame, "Percentage")
+        self._percentage_label_.grid(
+            row=0, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.x_label.grid(row=0, column=0, padx=10, pady=(0, 20), sticky="ns")
+
+        self.x_label = create_table_label(frame, "X Distance:")
+        self.x_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
-        self.x_textbox = ctk.CTkTextbox(
-            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
+        self.x_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self.x_textbox_current_value_.grid(
+            row=1, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.x_textbox.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
 
-        self.y_label = ctk.CTkLabel(
-            master=frame,
-            height=20,
-            text="Y Distance:",
-            font=("Arial", 14, "bold"),
+        self._x_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+        self._x_textbox_updated_value_.grid(
+            row=1, column=3, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.y_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
+        self._x_textbox_percentage_value_ = create_table_value_textbox(
+            frame, ctk.NORMAL
+        )
+        self._x_textbox_percentage_value_.grid(
+            row=1, column=4, padx=10, pady=(0, 20), sticky="ns"
+        )
+
+        self.y_label = create_table_label(frame, "Y Distance:")
+        self.y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
-        self.y_textbox = ctk.CTkTextbox(
-            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
+        self.y_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self.y_textbox_current_value_.grid(
+            row=2, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.y_textbox.grid(row=1, column=1, padx=10, pady=(0, 20), sticky="ns")
 
+        self._linked_operation_ = True
         self._linked_button_ = ctk.CTkButton(
             master=frame,
             text="",
@@ -93,43 +105,65 @@ class App(ctk.CTk):
             fg_color="transparent",
             bg_color="transparent",
             image=self._linked_icon_,
-            command=lambda: print("Button clicked!"),
+            command=self._toggle_linked_operation_,
         )
-        self._linked_button_.grid(row=1, column=2, padx=10, pady=(0, 20), sticky="ns")
+        self._linked_button_.grid(row=2, column=2, padx=10, pady=(0, 20), sticky="ns")
 
-        self.z_label = ctk.CTkLabel(
-            master=frame,
-            height=20,
-            text="Z Distance:",
-            font=("Arial", 14, "bold"),
+        self._y_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+        self._y_textbox_updated_value_.grid(
+            row=2, column=3, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.z_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
+        self._y_textbox_percentage_value_ = create_table_value_textbox(
+            frame, ctk.NORMAL
+        )
+        self._y_textbox_percentage_value_.grid(
+            row=2, column=4, padx=10, pady=(0, 20), sticky="ns"
+        )
+
+        self.z_label = create_table_label(frame, "Z Distance:")
+        self.z_label.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
-        self.z_textbox = ctk.CTkTextbox(
-            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
+        self.z_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+        self.z_textbox_current_value_.grid(
+            row=3, column=1, padx=10, pady=(0, 20), sticky="ns"
         )
-        self.z_textbox.grid(row=2, column=1, padx=10, pady=(0, 20), sticky="ns")
+        self._x_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+        self._x_textbox_updated_value_.grid(
+            row=3, column=3, padx=10, pady=(0, 20), sticky="ns"
+        )
+        self._x_textbox_percentage_value_ = create_table_value_textbox(
+            frame, ctk.NORMAL
+        )
+        self._x_textbox_percentage_value_.grid(
+            row=3, column=4, padx=10, pady=(0, 20), sticky="ns"
+        )
 
     def _update_size_values_(self):
         x_values = tuple(x / 25.4 for x in self._model_.xbounds())
         y_values = tuple(y / 25.4 for y in self._model_.ybounds())
         z_values = tuple(z / 25.4 for z in self._model_.zbounds())
 
-        self.x_textbox.configure(state=ctk.NORMAL)
-        self.x_textbox.delete("0.0", "end")
-        self.x_textbox.insert("0.0", f"{(x_values[1] - x_values[0]):.2f}")
-        self.x_textbox.configure(state=ctk.DISABLED)
+        self.x_textbox_current_value_.configure(state=ctk.NORMAL)
+        self.x_textbox_current_value_.delete("0.0", "end")
+        self.x_textbox_current_value_.insert(
+            "0.0", f"{(x_values[1] - x_values[0]):.2f}"
+        )
+        self.x_textbox_current_value_.configure(state=ctk.DISABLED)
 
-        self.y_textbox.configure(state=ctk.NORMAL)
-        self.y_textbox.delete("0.0", "end")
-        self.y_textbox.insert("0.0", f"{(y_values[1] - y_values[0]):.2f}")
-        self.y_textbox.configure(state=ctk.DISABLED)
+        self.y_textbox_current_value_.configure(state=ctk.NORMAL)
+        self.y_textbox_current_value_.delete("0.0", "end")
+        self.y_textbox_current_value_.insert(
+            "0.0", f"{(y_values[1] - y_values[0]):.2f}"
+        )
+        self.y_textbox_current_value_.configure(state=ctk.DISABLED)
 
-        self.z_textbox.configure(state=ctk.NORMAL)
-        self.z_textbox.delete("0.0", "end")
-        self.z_textbox.insert("0.0", f"{(z_values[1] - z_values[0]):.2f}")
-        self.z_textbox.configure(state=ctk.DISABLED)
+        self.z_textbox_current_value_.configure(state=ctk.NORMAL)
+        self.z_textbox_current_value_.delete("0.0", "end")
+        self.z_textbox_current_value_.insert(
+            "0.0", f"{(z_values[1] - z_values[0]):.2f}"
+        )
+        self.z_textbox_current_value_.configure(state=ctk.DISABLED)
 
     def _open_file_prompt_(self):
         file_path = ctk.filedialog.askopenfilename(
@@ -147,6 +181,14 @@ class App(ctk.CTk):
 
             # Update the size values
             self._update_size_values_()
+
+    def _toggle_linked_operation_(self):
+        if self._linked_operation_:
+            self._linked_button_.configure(image=self._unlinked_icon_)
+        else:
+            self._linked_button_.configure(image=self._linked_icon_)
+
+        self._linked_operation_ = not self._linked_operation_
 
 
 if __name__ == "__main__":
