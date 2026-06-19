@@ -2,19 +2,6 @@ from vedo import Mesh, show
 import customtkinter as ctk
 from PIL import Image
 
-def new_way_to_get_size():
-    # Load your STL file
-    mesh_model = Mesh('Bee_circle.stl')
-    # Color it like a machined part (e.g., aluminum or wood)
-    mesh_model.color("silver")
-
-    # Show and interact with the 3D model
-    show(mesh_model, axes=1, bg="white").close()
-
-    # Bounds
-    x_max = mesh_model.xbounds()[1] / 25.4
-    x_min = mesh_model.xbounds()[0] / 25.4
-
 # Set up global styling and theme configurations
 ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Options: "blue", "green", "dark-blue"
