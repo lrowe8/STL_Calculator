@@ -330,7 +330,7 @@ class App(ctk.CTk):
                 )
                 update_textbox(
                     self._x_textbox_updated_value_,
-                    f"{(float(get_textbox_value(self._y_textbox_current_value_)) * percentage):.2f}",
+                    f"{(float(get_textbox_value(self._x_textbox_current_value_)) * percentage):.2f}",
                 )
                 update_textbox(
                     self._z_textbox_updated_value_,
@@ -365,7 +365,7 @@ class App(ctk.CTk):
                 percentage = float(get_textbox_value(event.widget.master)) / 100
                 update_textbox(
                     self._z_textbox_updated_value_,
-                    f"{(float(get_textbox_value(self._x_textbox_current_value_)) * percentage):.2f}",
+                    f"{(float(get_textbox_value(self._z_textbox_current_value_)) * percentage):.2f}",
                 )
 
             if event.widget.master in [
