@@ -2,9 +2,6 @@ from vedo import Mesh, show
 import customtkinter as ctk
 from PIL import Image
 
-# Set up global styling and theme configurations
-ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
-ctk.set_default_color_theme("blue")  # Options: "blue", "green", "dark-blue"
 
 class App(ctk.CTk):
     def __init__(self):
@@ -15,9 +12,9 @@ class App(ctk.CTk):
         self._linked_icon_ = ctk.CTkImage(
             light_image=Image.open("broken.jpg"),
             dark_image=Image.open("link.jpg"),
-            size=(20, 20)
+            size=(20, 20),
         )
-        
+
         # Configure application window dimensions
         self.title("CNC Router STL Application")
         self.geometry("800x800")
@@ -45,20 +42,18 @@ class App(ctk.CTk):
             text="Current File:",
             font=("Arial", 14, "bold"),
         )
-        self.my_label.grid(row=0, column=0, padx=10, pady=(20, 5))
+        self.my_label.grid(row=0, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
         self.my_textbox = ctk.CTkTextbox(
-            master=frame,
-            width=400,
-            height=20,
-            corner_radius=8,
-            state=ctk.DISABLED
+            master=frame, width=400, height=20, corner_radius=8, state=ctk.DISABLED
         )
-        self.my_textbox.grid(row=0, column=1, padx=10, pady=(0, 20))
-        
+        self.my_textbox.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
+
         # Create load button
-        self.button = ctk.CTkButton(frame, text="Load file", command=self._open_file_prompt_)
+        self.button = ctk.CTkButton(
+            frame, text="Load file", command=self._open_file_prompt_
+        )
         self.button.grid(row=0, column=2, padx=10, pady=(0, 20))
 
     def _set_calc_controls_(self, frame: ctk.CTkFrame):
@@ -68,17 +63,13 @@ class App(ctk.CTk):
             text="X Distance:",
             font=("Arial", 14, "bold"),
         )
-        self.x_label.grid(row=0, column=0, padx=10, pady=(20, 5))
+        self.x_label.grid(row=0, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
         self.x_textbox = ctk.CTkTextbox(
-            master=frame,
-            width=75,
-            height=20,
-            corner_radius=8,
-            state=ctk.DISABLED
+            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
         )
-        self.x_textbox.grid(row=0, column=1, padx=10, pady=(0, 20))
+        self.x_textbox.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
 
         self.y_label = ctk.CTkLabel(
             master=frame,
@@ -86,17 +77,13 @@ class App(ctk.CTk):
             text="Y Distance:",
             font=("Arial", 14, "bold"),
         )
-        self.y_label.grid(row=1, column=0, padx=10, pady=(20, 5))
+        self.y_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
         self.y_textbox = ctk.CTkTextbox(
-            master=frame,
-            width=75,
-            height=20,
-            corner_radius=8,
-            state=ctk.DISABLED
+            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
         )
-        self.y_textbox.grid(row=1, column=1, padx=10, pady=(0, 20))
+        self.y_textbox.grid(row=1, column=1, padx=10, pady=(0, 20), sticky="ns")
 
         self._linked_button_ = ctk.CTkButton(
             master=frame,
@@ -106,9 +93,9 @@ class App(ctk.CTk):
             fg_color="transparent",
             bg_color="transparent",
             image=self._linked_icon_,
-            command=lambda: print("Button clicked!")
+            command=lambda: print("Button clicked!"),
         )
-        self._linked_button_.grid(row=1, column=2, padx=10, pady=(0, 20))
+        self._linked_button_.grid(row=1, column=2, padx=10, pady=(0, 20), sticky="ns")
 
         self.z_label = ctk.CTkLabel(
             master=frame,
@@ -116,17 +103,13 @@ class App(ctk.CTk):
             text="Z Distance:",
             font=("Arial", 14, "bold"),
         )
-        self.z_label.grid(row=2, column=0, padx=10, pady=(20, 5))
+        self.z_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
 
         # Create textbox
         self.z_textbox = ctk.CTkTextbox(
-            master=frame,
-            width=75,
-            height=20,
-            corner_radius=8,
-            state=ctk.DISABLED
+            master=frame, width=75, height=20, corner_radius=8, state=ctk.DISABLED
         )
-        self.z_textbox.grid(row=2, column=1, padx=10, pady=(0, 20))
+        self.z_textbox.grid(row=2, column=1, padx=10, pady=(0, 20), sticky="ns")
 
     def _update_size_values_(self):
         x_values = tuple(x / 25.4 for x in self._model_.xbounds())
@@ -135,26 +118,24 @@ class App(ctk.CTk):
 
         self.x_textbox.configure(state=ctk.NORMAL)
         self.x_textbox.delete("0.0", "end")
-        self.x_textbox.insert("0.0", f'{(x_values[1] - x_values[0]):.2f}')
+        self.x_textbox.insert("0.0", f"{(x_values[1] - x_values[0]):.2f}")
         self.x_textbox.configure(state=ctk.DISABLED)
 
         self.y_textbox.configure(state=ctk.NORMAL)
         self.y_textbox.delete("0.0", "end")
-        self.y_textbox.insert("0.0", f'{(y_values[1] - y_values[0]):.2f}')
+        self.y_textbox.insert("0.0", f"{(y_values[1] - y_values[0]):.2f}")
         self.y_textbox.configure(state=ctk.DISABLED)
 
         self.z_textbox.configure(state=ctk.NORMAL)
         self.z_textbox.delete("0.0", "end")
-        self.z_textbox.insert("0.0", f'{(z_values[1] - z_values[0]):.2f}')
+        self.z_textbox.insert("0.0", f"{(z_values[1] - z_values[0]):.2f}")
         self.z_textbox.configure(state=ctk.DISABLED)
 
     def _open_file_prompt_(self):
         file_path = ctk.filedialog.askopenfilename(
-            title="Select a File",
-            initialdir="/",
-            filetypes=[("STL Files", "*.stl")]
+            title="Select a File", initialdir="/", filetypes=[("STL Files", "*.stl")]
         )
-        
+
         if file_path:
             self._model_ = Mesh(file_path)
 
@@ -167,8 +148,10 @@ class App(ctk.CTk):
             # Update the size values
             self._update_size_values_()
 
-            
 
 if __name__ == "__main__":
+    ctk.set_appearance_mode("System")
+    ctk.set_default_color_theme("blue")
+
     app = App()
     app.mainloop()

@@ -1,0 +1,34 @@
+{
+    "Header Doc String": {
+        "prefix": "headerdoc",
+        "body": [
+            "\"\"\"",
+            "Description: {$1:description}",
+            "Author: ${2:Name} ${3:email}",
+            "\"\"\""
+        ],
+        "description": "description"
+    },
+    "Class Docstring" : {
+        "prefix": "classdoc",
+        "body": [
+            "\"\"\"",
+            "${1:summary_of_class}",
+            "\"\"\""
+        ]
+    },
+    "Function Docstring" : {
+        "prefix": "funcdoc",
+        "body": [
+            "\"\"\"",
+            "${1:Description}", 
+            "",
+            "Inputs:",
+            "\t${2:arg1}(${3:type}): ${4:desc}",
+            "",
+            "Returns:",
+            "\t${5:type}: ${6:desc}",
+            "\"\"\""
+        ]
+    }
+}
