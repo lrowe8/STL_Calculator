@@ -1,6 +1,8 @@
-from vedo import Mesh, show
+from vedo import Mesh, show, Plotter
 import customtkinter as ctk
 from PIL import Image
+import os
+import sys
 
 from shared_utils import create_table_value_textbox, create_table_label
 
@@ -12,27 +14,40 @@ class App(ctk.CTk):
         # Class variable initialization
         self._model_ = None
         self._linked_operation_ = True
-        self._linked_icon_ = ctk.CTkImage(Image.open("link.jpg"), size=(20, 20))
-        self._unlinked_icon_ = ctk.CTkImage(Image.open("broken.jpg"), size=(20, 20))
+        self._plot_ = None
+        self._linked_icon_ = ctk.CTkImage(
+            Image.open("resources/link.jpg"), size=(20, 20)
+        )
+        self._unlinked_icon_ = ctk.CTkImage(
+            Image.open("resources/broken.jpg"), size=(20, 20)
+        )
 
         # Configure application window dimensions
         self.title("CNC Router STL Application")
         self.geometry("800x800")
 
         # self.grid_columnconfigure(2, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
+        # Set up load controls
         load_control_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         load_control_frame.grid_rowconfigure(0, weight=1)
         load_control_frame.grid_columnconfigure(2, weight=1)
         load_control_frame.grid(row=0, pady=(20, 5))
         self._set_load_controls_(load_control_frame)
 
+        # Set up modification controls
         calc_control_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         calc_control_frame.grid_rowconfigure(2, weight=1)
         calc_control_frame.grid_columnconfigure(1, weight=1)
         calc_control_frame.grid(row=1, pady=(20, 5))
         self._set_calc_controls_(calc_control_frame)
+
+        viz_frame = ctk.CTkFrame(master=self, fg_color="transparent")
+        viz_frame.grid_rowconfigure(0, weight=1)
+        viz_frame.grid_columnconfigure(0, weight=1)
+        viz_frame.grid(row=2, pady=(20, 5))
+        self._set_viz_controls_(viz_frame)
 
     def _set_load_controls_(self, frame: ctk.CTkFrame):
         # Create label for load box
@@ -86,6 +101,7 @@ class App(ctk.CTk):
         self._x_textbox_percentage_value_.grid(
             row=1, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
+        # TODO add callback for number validation and updates
 
         self.y_label = create_table_label(frame, "Y Distance:")
         self.y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
@@ -139,6 +155,12 @@ class App(ctk.CTk):
             row=3, column=4, padx=10, pady=(0, 20), sticky="ns"
         )
 
+    def _set_viz_controls_(self, frame: ctk.CTkFrame):
+        self._viz_button_ = ctk.CTkButton(
+            frame, text="Visualize", command=self._visualize_, state=ctk.DISABLED
+        )
+        self._viz_button_.grid(row=0, column=0, padx=10, pady=(0, 20))
+
     def _update_size_values_(self):
         x_values = tuple(x / 25.4 for x in self._model_.xbounds())
         y_values = tuple(y / 25.4 for y in self._model_.ybounds())
@@ -182,6 +204,9 @@ class App(ctk.CTk):
             # Update the size values
             self._update_size_values_()
 
+            # Enable visualize button
+            self._viz_button_.configure(state=ctk.NORMAL)
+
     def _toggle_linked_operation_(self):
         if self._linked_operation_:
             self._linked_button_.configure(image=self._unlinked_icon_)
@@ -190,8 +215,16 @@ class App(ctk.CTk):
 
         self._linked_operation_ = not self._linked_operation_
 
+    def _visualize_(self):
+        self._model_.show(axes=1)
+
 
 if __name__ == "__main__":
+    vtk_path = os.path.join(sys.prefix, "Lib", "site-packages", "vtkmodules")
+
+    if os.path.exists(vtk_path):
+        os.add_dll_directory(vtk_path)
+
     ctk.set_appearance_mode("System")
     ctk.set_default_color_theme("blue")
 
