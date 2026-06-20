@@ -55,6 +55,23 @@ class App(ctk.CTk):
         viz_frame.grid(row=2, pady=(20, 5))
         self._set_viz_controls_(viz_frame)
 
+    def _open_file_prompt_(self):
+        file_path = ctk.filedialog.askopenfilename(
+            title="Select a File", initialdir="/", filetypes=[("STL Files", "*.stl")]
+        )
+
+        if file_path:
+            self._model_ = Mesh(file_path)
+
+            # Update the file path
+            update_textbox(self.my_textbox, file_path)
+
+            # Update the size values
+            self._update_size_values_()
+
+            # Enable visualize button
+            self._viz_button_.configure(state=ctk.NORMAL)
+
     def _set_load_controls_(self, frame: ctk.CTkFrame):
         # Create label for load box
         self.my_label = ctk.CTkLabel(
@@ -76,6 +93,12 @@ class App(ctk.CTk):
             frame, text="Load file", command=self._open_file_prompt_
         )
         self.button.grid(row=0, column=2, padx=10, pady=(0, 20))
+
+    def _set_viz_controls_(self, frame: ctk.CTkFrame):
+        self._viz_button_ = ctk.CTkButton(
+            frame, text="Visualize", command=self._visualize_, state=ctk.DISABLED
+        )
+        self._viz_button_.grid(row=0, column=0, padx=10, pady=(0, 20))
 
     def _setup_calc_table_(self, frame: ctk.CTkFrame):
         # Set up header
@@ -169,12 +192,6 @@ class App(ctk.CTk):
         self._y_textbox_percentage_value_.bind("<FocusOut>", self._y_values_update_)
         self._z_textbox_percentage_value_.bind("<FocusOut>", self._z_values_update_)
 
-    def _set_viz_controls_(self, frame: ctk.CTkFrame):
-        self._viz_button_ = ctk.CTkButton(
-            frame, text="Visualize", command=self._visualize_, state=ctk.DISABLED
-        )
-        self._viz_button_.grid(row=0, column=0, padx=10, pady=(0, 20))
-
     def _update_size_values_(self):
         x_values = tuple(x / 25.4 for x in self._model_.xbounds())
         y_values = tuple(y / 25.4 for y in self._model_.ybounds())
@@ -207,23 +224,6 @@ class App(ctk.CTk):
         update_textbox(self._y_textbox_percentage_value_, f"{(100):.2f}")
         update_textbox(self._z_textbox_percentage_value_, f"{(100):.2f}")
 
-    def _open_file_prompt_(self):
-        file_path = ctk.filedialog.askopenfilename(
-            title="Select a File", initialdir="/", filetypes=[("STL Files", "*.stl")]
-        )
-
-        if file_path:
-            self._model_ = Mesh(file_path)
-
-            # Update the file path
-            update_textbox(self.my_textbox, file_path)
-
-            # Update the size values
-            self._update_size_values_()
-
-            # Enable visualize button
-            self._viz_button_.configure(state=ctk.NORMAL)
-
     def _toggle_linked_operation_(self):
         if self._linked_operation_:
             self._linked_button_.configure(image=self._unlinked_icon_)
@@ -249,6 +249,15 @@ class App(ctk.CTk):
         self._model_.scale(scale_factors)
 
         print(f"Before Exit {self._model_.zbounds()}")
+
+    def _percentage_updated_(self, event):
+        updated_percentage = float(get_textbox_value(event.widget.master))
+
+        if self._linked_operation_:
+            # Update all percentages
+            pass
+        else:
+            pass
 
     def _x_values_update_(self, event):
         # TODO bounds check for zero
