@@ -4,9 +4,10 @@ from PIL import Image
 import os
 import sys
 
-from shared_utils import (
-    create_table_value_textbox,
-    create_table_label,
+from components import ValuesTable
+from utils import (
+    # create_table_value_textbox,
+    # create_table_label,
     update_textbox,
     get_textbox_value,
 )
@@ -41,13 +42,7 @@ class App(ctk.CTk):
         load_control_frame.grid(row=0, pady=(20, 5))
         self._set_load_controls_(load_control_frame)
 
-        # Set up modification controls
-        calc_control_frame = ctk.CTkFrame(master=self, fg_color="transparent")
-        calc_control_frame.grid_rowconfigure(2, weight=1)
-        calc_control_frame.grid_columnconfigure(1, weight=1)
-        calc_control_frame.grid(row=1, pady=(20, 5))
-        self._setup_calc_table_(calc_control_frame)
-        self._setup_calc_callbacks_()
+        self._values_table_ = ValuesTable(self)
 
         viz_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         viz_frame.grid_rowconfigure(0, weight=1)
@@ -100,89 +95,61 @@ class App(ctk.CTk):
         )
         self._viz_button_.grid(row=0, column=0, padx=10, pady=(0, 20))
 
-    def _setup_calc_table_(self, frame: ctk.CTkFrame):
-        # Set up header
-        self._original_label_ = create_table_label(frame, "Original (in)")
-        self._original_label_.grid(row=0, column=1, padx=10, pady=(0, 20), sticky="ns")
-        self._updated_label_ = create_table_label(frame, "Updated (in)")
-        self._updated_label_.grid(row=0, column=3, padx=10, pady=(0, 20), sticky="ns")
-        self._percentage_label_ = create_table_label(frame, "Percentage")
-        self._percentage_label_.grid(
-            row=0, column=4, padx=10, pady=(0, 20), sticky="ns"
-        )
+    # def _setup_calc_table_(self, frame: ctk.CTkFrame):
 
-        # Set up X row
-        self._x_label = create_table_label(frame, "X Distance:")
-        self._x_label.grid(row=1, column=0, padx=10, pady=(0, 20), sticky="ns")
+    #     # TODO add callback for number validation and updates
+    #     # Setup Y row
+    #     self._y_label = create_table_label(frame, "Y Distance:")
+    #     self._y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
 
-        self._x_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self._x_textbox_current_value_.grid(
-            row=1, column=1, padx=10, pady=(0, 20), sticky="ns"
-        )
+    #     self._y_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+    #     self._y_textbox_current_value_.grid(
+    #         row=2, column=1, padx=10, pady=(0, 20), sticky="ns"
+    #     )
 
-        self._x_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
-        self._x_textbox_updated_value_.grid(
-            row=1, column=3, padx=10, pady=(0, 20), sticky="ns"
-        )
-        self._x_textbox_percentage_value_ = create_table_value_textbox(
-            frame, ctk.NORMAL
-        )
-        self._x_textbox_percentage_value_.grid(
-            row=1, column=4, padx=10, pady=(0, 20), sticky="ns"
-        )
-        # TODO add callback for number validation and updates
-        # Setup Y row
-        self._y_label = create_table_label(frame, "Y Distance:")
-        self._y_label.grid(row=2, column=0, padx=10, pady=(0, 20), sticky="ns")
+    #     self._linked_operation_ = True
+    #     self._linked_button_ = ctk.CTkButton(
+    #         master=frame,
+    #         text="",
+    #         height=20,
+    #         width=20,
+    #         fg_color="transparent",
+    #         bg_color="transparent",
+    #         image=self._linked_icon_,
+    #         command=self._toggle_linked_operation_,
+    #     )
+    #     self._linked_button_.grid(row=2, column=2, padx=10, pady=(0, 20), sticky="ns")
 
-        self._y_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self._y_textbox_current_value_.grid(
-            row=2, column=1, padx=10, pady=(0, 20), sticky="ns"
-        )
+    #     self._y_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+    #     self._y_textbox_updated_value_.grid(
+    #         row=2, column=3, padx=10, pady=(0, 20), sticky="ns"
+    #     )
+    #     self._y_textbox_percentage_value_ = create_table_value_textbox(
+    #         frame, ctk.NORMAL
+    #     )
+    #     self._y_textbox_percentage_value_.grid(
+    #         row=2, column=4, padx=10, pady=(0, 20), sticky="ns"
+    #     )
 
-        self._linked_operation_ = True
-        self._linked_button_ = ctk.CTkButton(
-            master=frame,
-            text="",
-            height=20,
-            width=20,
-            fg_color="transparent",
-            bg_color="transparent",
-            image=self._linked_icon_,
-            command=self._toggle_linked_operation_,
-        )
-        self._linked_button_.grid(row=2, column=2, padx=10, pady=(0, 20), sticky="ns")
+    #     # Set up Z row
+    #     self._z_label = create_table_label(frame, "Z Distance:")
+    #     self._z_label.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="ns")
 
-        self._y_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
-        self._y_textbox_updated_value_.grid(
-            row=2, column=3, padx=10, pady=(0, 20), sticky="ns"
-        )
-        self._y_textbox_percentage_value_ = create_table_value_textbox(
-            frame, ctk.NORMAL
-        )
-        self._y_textbox_percentage_value_.grid(
-            row=2, column=4, padx=10, pady=(0, 20), sticky="ns"
-        )
-
-        # Set up Z row
-        self._z_label = create_table_label(frame, "Z Distance:")
-        self._z_label.grid(row=3, column=0, padx=10, pady=(0, 20), sticky="ns")
-
-        # Create textbox
-        self._z_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
-        self._z_textbox_current_value_.grid(
-            row=3, column=1, padx=10, pady=(0, 20), sticky="ns"
-        )
-        self._z_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
-        self._z_textbox_updated_value_.grid(
-            row=3, column=3, padx=10, pady=(0, 20), sticky="ns"
-        )
-        self._z_textbox_percentage_value_ = create_table_value_textbox(
-            frame, ctk.NORMAL
-        )
-        self._z_textbox_percentage_value_.grid(
-            row=3, column=4, padx=10, pady=(0, 20), sticky="ns"
-        )
+    #     # Create textbox
+    #     self._z_textbox_current_value_ = create_table_value_textbox(frame, ctk.DISABLED)
+    #     self._z_textbox_current_value_.grid(
+    #         row=3, column=1, padx=10, pady=(0, 20), sticky="ns"
+    #     )
+    #     self._z_textbox_updated_value_ = create_table_value_textbox(frame, ctk.NORMAL)
+    #     self._z_textbox_updated_value_.grid(
+    #         row=3, column=3, padx=10, pady=(0, 20), sticky="ns"
+    #     )
+    #     self._z_textbox_percentage_value_ = create_table_value_textbox(
+    #         frame, ctk.NORMAL
+    #     )
+    #     self._z_textbox_percentage_value_.grid(
+    #         row=3, column=4, padx=10, pady=(0, 20), sticky="ns"
+    #     )
 
     def _setup_calc_callbacks_(self):
         self._x_textbox_updated_value_.bind("<FocusOut>", self._x_values_update_)
