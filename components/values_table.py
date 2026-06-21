@@ -2,7 +2,14 @@ import customtkinter as ctk
 from typing import Any, Callable, Tuple
 from PIL import Image
 
-from utils import create_table_label, create_table_value_textbox
+from utils import (
+    create_table_label,
+    create_table_value_textbox,
+    get_textbox_value,
+    update_textbox,
+)
+
+# TODO Add disable / enable
 
 
 class ValuesTable(ctk.CTkFrame):
@@ -36,7 +43,7 @@ class ValuesTable(ctk.CTkFrame):
             self._y_updated_textbox_,
             self._y_percent_textbox_,
         ) = self._create_row_(
-            "Y Distance:", 2, self._linked_icon_, self._toggle_linked_operation_
+            "Y Distance:", 2, self._linked_icon_, self._toggle_linked_operation_cb_
         )
         (
             self._z_label_,
@@ -45,6 +52,16 @@ class ValuesTable(ctk.CTkFrame):
             self._z_updated_textbox_,
             self._z_percent_textbox_,
         ) = self._create_row_("Z Distance:", 3)
+
+        # Percentage callbacks
+        self._x_percent_textbox_.bind("<FocusOut>", self._percentage_update_cb_)
+        self._y_percent_textbox_.bind("<FocusOut>", self._percentage_update_cb_)
+        self._z_percent_textbox_.bind("<FocusOut>", self._percentage_update_cb_)
+
+        # Value callbacks
+        self._x_updated_textbox_.bind("<FocusOut>", self._value_update_cb_)
+        self._y_updated_textbox_.bind("<FocusOut>", self._value_update_cb_)
+        self._z_updated_textbox_.bind("<FocusOut>", self._value_update_cb_)
 
     def _create_header_(self):
         self._original_label_ = create_table_label(self, "Original (in)")
@@ -94,10 +111,90 @@ class ValuesTable(ctk.CTkFrame):
 
         return label, current_value, button, updated_value, percentage_value
 
-    def _toggle_linked_operation_(self):
+    def _toggle_linked_operation_cb_(self):
         if self._linked_operation_:
             self._toggle_button_.configure(image=self._unlinked_icon_)
         else:
             self._toggle_button_.configure(image=self._linked_icon_)
 
         self._linked_operation_ = not self._linked_operation_
+
+    def _percentage_based_update_(self, reference_field):
+        updated_percentage = float(get_textbox_value(reference_field))
+        x_current = float(get_textbox_value(self._x_current_textbox_))
+        y_current = float(get_textbox_value(self._y_current_textbox_))
+        z_current = float(get_textbox_value(self._z_current_textbox_))
+        elements_to_update = []
+
+        if self._linked_operation_:
+            # Update percentage boxes
+            update_textbox(self._x_percent_textbox_, f"{updated_percentage:.2f}")
+            update_textbox(self._y_percent_textbox_, f"{updated_percentage:.2f}")
+            update_textbox(self._z_percent_textbox_, f"{updated_percentage:.2f}")
+
+            elements_to_update += [
+                (self._x_updated_textbox_, x_current),
+                (self._y_updated_textbox_, y_current),
+                (self._z_updated_textbox_, z_current),
+            ]
+        elif reference_field is self._x_percent_textbox_:
+            elements_to_update.append((self._x_updated_textbox_, x_current))
+        elif reference_field is self._y_percent_textbox_:
+            elements_to_update.append((self._y_updated_textbox_, y_current))
+        elif reference_field is self._z_percent_textbox_:
+            elements_to_update.append((self._z_updated_textbox_, z_current))
+
+        # Update updated values
+        for element, current in elements_to_update:
+            update_textbox(
+                element,
+                f"{(current * (updated_percentage / 100)):.2f}",
+            )
+
+    def _percentage_update_cb_(self, event) -> None:
+        if event.widget.master in [
+            self._x_percent_textbox_,
+            self._y_percent_textbox_,
+            self._z_percent_textbox_,
+        ]:
+            self._percentage_based_update_(event.widget.master)
+
+    def _value_update_cb_(self, event) -> None:
+        new_value = float(get_textbox_value(event.widget.master))
+        percentage_textbox = None
+
+        if event.widget.master is self._x_updated_textbox_:
+            default_value = float(get_textbox_value(self._x_current_textbox_))
+            percentage_textbox = self._x_percent_textbox_
+        elif event.widget.master is self._y_updated_textbox_:
+            default_value = float(get_textbox_value(self._y_current_textbox_))
+            percentage_textbox = self._y_percent_textbox_
+        elif event.widget.master is self._z_current_textbox_:
+            default_value = float(get_textbox_value(self._z_current_textbox_))
+            percentage_textbox = self._z_percent_textbox_
+
+        if percentage_textbox:
+            update_textbox(
+                percentage_textbox, f"{(new_value / default_value * 100):.2f}"
+            )
+            self._percentage_based_update_(percentage_textbox)
+
+    def set_initial_values(
+        self, x_value: float, y_value: float, z_value: float
+    ) -> None:
+        update_textbox(self._x_current_textbox_, f"{x_value:.2f}")
+        update_textbox(self._y_current_textbox_, f"{y_value:.2f}")
+        update_textbox(self._z_current_textbox_, f"{z_value:.2f}")
+        update_textbox(self._x_updated_textbox_, f"{x_value:.2f}")
+        update_textbox(self._y_updated_textbox_, f"{y_value:.2f}")
+        update_textbox(self._z_updated_textbox_, f"{z_value:.2f}")
+        update_textbox(self._x_percent_textbox_, "100.00")
+        update_textbox(self._y_percent_textbox_, "100.00")
+        update_textbox(self._z_percent_textbox_, "100.00")
+
+    def get_set_percentages(self) -> Tuple[float, float, float]:
+        x_percentage = float(get_textbox_value(self._x_percent_textbox_)) / 100
+        y_percentage = float(get_textbox_value(self._y_percent_textbox_)) / 100
+        z_percentage = float(get_textbox_value(self._z_percent_textbox_)) / 100
+
+        return x_percentage, y_percentage, z_percentage
