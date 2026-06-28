@@ -169,7 +169,7 @@ class ValuesTable(ctk.CTkFrame):
         elif event.widget.master is self._y_updated_textbox_:
             default_value = float(get_textbox_value(self._y_current_textbox_))
             percentage_textbox = self._y_percent_textbox_
-        elif event.widget.master is self._z_current_textbox_:
+        elif event.widget.master is self._z_updated_textbox_:
             default_value = float(get_textbox_value(self._z_current_textbox_))
             percentage_textbox = self._z_percent_textbox_
 
