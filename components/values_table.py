@@ -10,6 +10,7 @@ from utils import (
 )
 
 # TODO Add disable / enable
+# TODO Add thickness display
 
 
 class ValuesTable(ctk.CTkFrame):
@@ -24,7 +25,7 @@ class ValuesTable(ctk.CTkFrame):
             Image.open("resources/broken.jpg"), size=(20, 20)
         )
 
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid(row=1, pady=(20, 5))
         self._create_header_()
@@ -180,7 +181,12 @@ class ValuesTable(ctk.CTkFrame):
             self._percentage_based_update_(percentage_textbox)
 
     def set_initial_values(
-        self, x_value: float, y_value: float, z_value: float
+        self,
+        x_value: float,
+        y_value: float,
+        z_value: float,
+        thickest_edge_thickness: float,
+        thinnest_edge_thickness: float,
     ) -> None:
         update_textbox(self._x_current_textbox_, f"{x_value:.2f}")
         update_textbox(self._y_current_textbox_, f"{y_value:.2f}")
@@ -191,6 +197,9 @@ class ValuesTable(ctk.CTkFrame):
         update_textbox(self._x_percent_textbox_, "100.00")
         update_textbox(self._y_percent_textbox_, "100.00")
         update_textbox(self._z_percent_textbox_, "100.00")
+
+        print(f"Default thickest edge thickness {thickest_edge_thickness:.2f} inches")
+        print(f"Default thinnest edge thickness {thinnest_edge_thickness:.2f} inches")
 
     def get_set_percentages(self) -> Tuple[float, float, float]:
         x_percentage = float(get_textbox_value(self._x_percent_textbox_)) / 100
