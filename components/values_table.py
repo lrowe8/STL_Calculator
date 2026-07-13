@@ -25,7 +25,7 @@ class ValuesTable(ctk.CTkFrame):
             Image.open("resources/broken.jpg"), size=(20, 20)
         )
 
-        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(5, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid(row=1, pady=(20, 5))
         self._create_header_()
@@ -53,6 +53,20 @@ class ValuesTable(ctk.CTkFrame):
             self._z_updated_textbox_,
             self._z_percent_textbox_,
         ) = self._create_row_("Z Distance:", 3)
+        (
+            self._max_edge_height_label_,
+            self._max_edge_height_current_textbox_,
+            _,
+            self._max_edge_height_updated_textbox_,
+            self._max_edge_height_percent_textbox_,
+        ) = self._create_row_("Thickest Edge Height:", 4)
+        (
+            self._min_edge_height_label_,
+            self._min_edge_height_current_textbox_,
+            _,
+            self._min_edge_height_updated_textbox_,
+            self._min_edge_height_percent_textbox_,
+        ) = self._create_row_("Thinnest Edge Height:", 5)
 
         # Percentage callbacks
         self._x_percent_textbox_.bind("<FocusOut>", self._percentage_update_cb_)
@@ -125,6 +139,12 @@ class ValuesTable(ctk.CTkFrame):
         x_current = float(get_textbox_value(self._x_current_textbox_))
         y_current = float(get_textbox_value(self._y_current_textbox_))
         z_current = float(get_textbox_value(self._z_current_textbox_))
+        max_edge_depth_current = float(
+            get_textbox_value(self._max_edge_height_current_textbox_)
+        )
+        min_edge_depth_current = float(
+            get_textbox_value(self._min_edge_height_current_textbox_)
+        )
         elements_to_update = []
 
         if self._linked_operation_:
@@ -132,11 +152,25 @@ class ValuesTable(ctk.CTkFrame):
             update_textbox(self._x_percent_textbox_, f"{updated_percentage:.2f}")
             update_textbox(self._y_percent_textbox_, f"{updated_percentage:.2f}")
             update_textbox(self._z_percent_textbox_, f"{updated_percentage:.2f}")
+            update_textbox(
+                self._max_edge_height_percent_textbox_, f"{updated_percentage:.2f}"
+            )
+            update_textbox(
+                self._min_edge_height_percent_textbox_, f"{updated_percentage:.2f}"
+            )
 
             elements_to_update += [
                 (self._x_updated_textbox_, x_current),
                 (self._y_updated_textbox_, y_current),
                 (self._z_updated_textbox_, z_current),
+                (
+                    self._max_edge_height_updated_textbox_,
+                    max_edge_depth_current,
+                ),
+                (
+                    self._min_edge_height_updated_textbox_,
+                    min_edge_depth_current,
+                ),
             ]
         elif reference_field is self._x_percent_textbox_:
             elements_to_update.append((self._x_updated_textbox_, x_current))
@@ -144,6 +178,18 @@ class ValuesTable(ctk.CTkFrame):
             elements_to_update.append((self._y_updated_textbox_, y_current))
         elif reference_field is self._z_percent_textbox_:
             elements_to_update.append((self._z_updated_textbox_, z_current))
+            elements_to_update.append(
+                (
+                    self._max_edge_height_updated_textbox_,
+                    max_edge_depth_current,
+                )
+            )
+            elements_to_update.append(
+                (
+                    self._min_edge_height_updated_textbox_,
+                    min_edge_depth_current,
+                )
+            )
 
         # Update updated values
         for element, current in elements_to_update:
@@ -161,23 +207,49 @@ class ValuesTable(ctk.CTkFrame):
             self._percentage_based_update_(event.widget.master)
 
     def _value_update_cb_(self, event) -> None:
-        new_value = float(get_textbox_value(event.widget.master))
-        percentage_textbox = None
+        updated_value = float(get_textbox_value(event.widget.master))
+        to_update = []
 
         if event.widget.master is self._x_updated_textbox_:
-            default_value = float(get_textbox_value(self._x_current_textbox_))
-            percentage_textbox = self._x_percent_textbox_
-        elif event.widget.master is self._y_updated_textbox_:
-            default_value = float(get_textbox_value(self._y_current_textbox_))
-            percentage_textbox = self._y_percent_textbox_
-        elif event.widget.master is self._z_updated_textbox_:
-            default_value = float(get_textbox_value(self._z_current_textbox_))
-            percentage_textbox = self._z_percent_textbox_
-
-        if percentage_textbox:
-            update_textbox(
-                percentage_textbox, f"{(new_value / default_value * 100):.2f}"
+            to_update.append(
+                (
+                    f"{(updated_value / float(get_textbox_value(self._x_current_textbox_)) * 100):.2f}",
+                    self._x_percent_textbox_,
+                )
             )
+        elif event.widget.master is self._y_updated_textbox_:
+            to_update.append(
+                (
+                    f"{(updated_value / float(get_textbox_value(self._y_current_textbox_)) * 100):.2f}",
+                    self._y_percent_textbox_,
+                )
+            )
+        elif event.widget.master is self._z_updated_textbox_:
+            z_percentage = updated_value / float(
+                get_textbox_value(self._z_current_textbox_)
+            )
+
+            to_update.append(
+                (
+                    f"{z_percentage * 100:.2f}",
+                    self._z_percent_textbox_,
+                )
+            )
+            to_update.append(
+                (
+                    f"{float(get_textbox_value(self._max_edge_height_current_textbox_)) * z_percentage * 100:.2f}",
+                    self._max_edge_height_percent_textbox_,
+                )
+            )
+            to_update.append(
+                (
+                    f"{float(get_textbox_value(self._min_edge_height_current_textbox_)) * z_percentage * 100:.2f}",
+                    self._min_edge_height_percent_textbox_,
+                )
+            )
+
+        for updated_value, percentage_textbox in to_update:
+            update_textbox(percentage_textbox, updated_value)
             self._percentage_based_update_(percentage_textbox)
 
     def set_initial_values(
@@ -191,17 +263,30 @@ class ValuesTable(ctk.CTkFrame):
         update_textbox(self._x_current_textbox_, f"{x_value:.2f}")
         update_textbox(self._y_current_textbox_, f"{y_value:.2f}")
         update_textbox(self._z_current_textbox_, f"{z_value:.2f}")
+        update_textbox(
+            self._max_edge_height_current_textbox_, f"{thickest_edge_thickness:.2f}"
+        )
+        update_textbox(
+            self._min_edge_height_current_textbox_, f"{thinnest_edge_thickness:.2f}"
+        )
+
         update_textbox(self._x_updated_textbox_, f"{x_value:.2f}")
         update_textbox(self._y_updated_textbox_, f"{y_value:.2f}")
         update_textbox(self._z_updated_textbox_, f"{z_value:.2f}")
+        update_textbox(
+            self._max_edge_height_updated_textbox_, f"{thickest_edge_thickness:.2f}"
+        )
+        update_textbox(
+            self._min_edge_height_updated_textbox_, f"{thinnest_edge_thickness:.2f}"
+        )
+
         update_textbox(self._x_percent_textbox_, "100.00")
         update_textbox(self._y_percent_textbox_, "100.00")
         update_textbox(self._z_percent_textbox_, "100.00")
+        update_textbox(self._max_edge_height_percent_textbox_, "100.00")
+        update_textbox(self._min_edge_height_percent_textbox_, "100.00")
 
-        print(f"Default thickest edge thickness {thickest_edge_thickness:.2f} inches")
-        print(f"Default thinnest edge thickness {thinnest_edge_thickness:.2f} inches")
-
-    def get_set_percentages(self) -> Tuple[float, float, float]:
+    def get_percentages(self) -> Tuple[float, float, float]:
         x_percentage = float(get_textbox_value(self._x_percent_textbox_)) / 100
         y_percentage = float(get_textbox_value(self._y_percent_textbox_)) / 100
         z_percentage = float(get_textbox_value(self._z_percent_textbox_)) / 100

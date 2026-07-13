@@ -117,9 +117,10 @@ class App(ctk.CTk):
 
     def _get_edge_points_(self) -> Points:
         # 1. Get all 3D coordinates of the mesh vertices
-        points = self._model_.points
+        points = self._model_.vertices
 
         # 2. Find the center of the mesh in X and Y
+        mesh_bounds = self._model_.bounds()
         center_x = (self._model_.bounds()[0] + self._model_.bounds()[1]) / 2
         center_y = (self._model_.bounds()[2] + self._model_.bounds()[3]) / 2
 
@@ -131,7 +132,7 @@ class App(ctk.CTk):
         # 4. Grab points that are right at the maximum radius (the outer edge)
         # We use a tiny tolerance (e.g., 0.5mm) to account for mesh density
         max_distance = np.max(distances)
-        edge_indices = np.where(distances >= (max_distance - 0.5))[0]
+        edge_indices = np.where(distances >= (max_distance * 0.95))[0]
         edge_points = points[edge_indices]
 
         return edge_points
@@ -149,41 +150,34 @@ class App(ctk.CTk):
     def _get_thinnest_edge_thickness_(self) -> float:
         edge_points = self._get_edge_points_()
 
-        grid_size = 30  # Number of segments to check along X and Y. Increase for more precision.
-        x_bins = np.linspace(
-            np.min(edge_points[:, 0]), np.max(edge_points[:, 0]), grid_size
-        )
-        y_bins = np.linspace(
-            np.min(edge_points[:, 1]), np.max(edge_points[:, 1]), grid_size
-        )
+        # 1. Recalculate center to find relative angles
+        mesh_bounds = self._model_.bounds()
+        center_x = (mesh_bounds[0] + mesh_bounds[1]) / 2
+        center_y = (mesh_bounds[2] + mesh_bounds[3]) / 2
+
+        # 2. Convert X/Y coordinates to angles (radians from -pi to pi)
+        angles = np.arctan2(edge_points[:, 1] - center_y, edge_points[:, 0] - center_x)
+
+        # 3. Create angular bins around the circle (e.g., 72 slices = every 5 degrees)
+        num_slices = 72
+        angle_bins = np.linspace(-np.pi, np.pi, num_slices + 1)
 
         min_thickness = float("inf")
 
-        # This variable is for visualizations
-        # thinnest_points = None
+        # 4. Loop through each pizza slice
+        for i in range(num_slices):
+            # Isolate points inside the current angular slice
+            in_slice = (angles >= angle_bins[i]) & (angles < angle_bins[i + 1])
+            slice_points = edge_points[in_slice]
 
-        # Loop through the grid columns to find local edge thickness
-        for i in range(len(x_bins) - 1):
-            for j in range(len(y_bins) - 1):
-                # Isolate points falling inside the current local X/Y grid column
-                in_column = (
-                    (edge_points[:, 0] >= x_bins[i])
-                    & (edge_points[:, 0] < x_bins[i + 1])
-                    & (edge_points[:, 1] >= y_bins[j])
-                    & (edge_points[:, 1] < y_bins[j + 1])
-                )
-                col_points = edge_points[in_column]
+            # Ensure we have enough points to capture the full vertical wall profile
+            if len(slice_points) >= 3:
+                z_vals = slice_points[:, 2]
+                local_thickness = np.max(z_vals) - np.min(z_vals)
 
-                # We need at least 2 points (a top and a bottom) to calculate a thickness
-                if len(col_points) >= 2:
-                    z_vals = col_points[:, 2]
-                    local_thickness = np.max(z_vals) - np.min(z_vals)
-
-                    # Check if this is the thinnest section found so far
-                    # (Ignoring near-zero errors if the column only captured flat bottom points)
-                    if local_thickness < min_thickness and local_thickness > 0.01:
-                        min_thickness = local_thickness
-                        # thinnest_points = col_points
+                # Update minimum thickness if a valid thinner section is found
+                if local_thickness < min_thickness and local_thickness > 0.01:
+                    min_thickness = local_thickness
 
         return min_thickness
 
@@ -211,7 +205,7 @@ class App(ctk.CTk):
     def _visualize_(self):
         print(f"Before Scale{self._model_.zbounds()}")
 
-        scale_factors = self._values_table_.get_set_percentages()
+        scale_factors = self._values_table_.get_percentages()
         self._model_.scale(scale_factors)
         print(f"After Scale{self._model_.zbounds()}")
 
