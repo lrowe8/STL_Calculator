@@ -237,13 +237,13 @@ class ValuesTable(ctk.CTkFrame):
             )
             to_update.append(
                 (
-                    f"{float(get_textbox_value(self._max_edge_height_current_textbox_)) * z_percentage * 100:.2f}",
+                    f"{z_percentage * 100:.2f}",
                     self._max_edge_height_percent_textbox_,
                 )
             )
             to_update.append(
                 (
-                    f"{float(get_textbox_value(self._min_edge_height_current_textbox_)) * z_percentage * 100:.2f}",
+                    f"{z_percentage * 100:.2f}",
                     self._min_edge_height_percent_textbox_,
                 )
             )
